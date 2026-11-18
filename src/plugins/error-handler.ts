@@ -1,8 +1,10 @@
 import type { FastifyError, FastifyInstance } from 'fastify'
+import type { ConflictField } from '../lib/errors.js'
 
 type AppError = FastifyError & {
   code?: string
   statusCode?: number
+  fields?: ConflictField[]
 }
 
 export function registerErrorHandler(fastify: FastifyInstance): void {
@@ -20,12 +22,22 @@ export function registerErrorHandler(fastify: FastifyInstance): void {
     const statusCode = error.statusCode ?? 500
 
     if (statusCode < 500) {
-      void reply.status(statusCode).send({
+      const body: {
+        error: {
+          code: string
+          message: string
+          fields?: ConflictField[]
+        }
+      } = {
         error: {
           code: error.code ?? 'invalid_body',
           message: error.message || 'Ошибка запроса',
         },
-      })
+      }
+      if (error.fields && error.fields.length > 0) {
+        body.error.fields = error.fields
+      }
+      void reply.status(statusCode).send(body)
       return
     }
 

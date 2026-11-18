@@ -1,5 +1,6 @@
 import Fastify from 'fastify'
 import { registerErrorHandler } from './plugins/error-handler.js'
+import authRoutes from './routes/auth.js'
 import healthRoutes from './routes/health.js'
 
 export async function buildApp() {
@@ -9,6 +10,7 @@ export async function buildApp() {
 
   registerErrorHandler(app)
   await app.register(healthRoutes)
+  await app.register(authRoutes)
 
   return app
 }
