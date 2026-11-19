@@ -1,5 +1,7 @@
 import type { FastifyPluginAsync } from 'fastify'
+import { loginUser } from '../auth/login.js'
 import { confirmRegistration, registerUser } from '../auth/register.js'
+import { logoutCurrentSession } from '../auth/session.js'
 
 const passwordHashSchema = {
   type: 'string',
@@ -62,6 +64,38 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
       return reply.status(200).send(result)
     },
   )
+
+  fastify.post(
+    '/api/auth/login',
+    {
+      schema: {
+        body: {
+          type: 'object',
+          required: ['login', 'passwordHash', 'rememberMe'],
+          additionalProperties: false,
+          properties: {
+            login: { type: 'string', minLength: 1 },
+            passwordHash: passwordHashSchema,
+            rememberMe: { type: 'boolean' },
+          },
+        },
+      },
+    },
+    async (request, reply) => {
+      const body = request.body as {
+        login: string
+        passwordHash: string
+        rememberMe: boolean
+      }
+      const profile = await loginUser(body, request, reply)
+      return reply.status(200).send(profile)
+    },
+  )
+
+  fastify.post('/api/auth/logout', async (request, reply) => {
+    await logoutCurrentSession(request, reply)
+    return reply.status(204).send()
+  })
 }
 
 export default authRoutes

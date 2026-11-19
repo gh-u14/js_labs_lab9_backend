@@ -8,19 +8,14 @@ import {
   normalizeRegisterBody,
   type RegisterInput,
 } from './normalize.js'
+import { isPendingExpired, UNVERIFIED_TTL_MS } from './ttl.js'
 
-const PENDING_TTL_MS = 24 * 60 * 60 * 1000
-const UNVERIFIED_TTL_MS = 24 * 60 * 60 * 1000
 const OTP_CODE = '000000'
 
 const CONFLICT_ORDER: ConflictField[] = ['login', 'email', 'phone']
 
 function sortFields(fields: Set<ConflictField>): ConflictField[] {
   return CONFLICT_ORDER.filter((field) => fields.has(field))
-}
-
-function isPendingExpired(createdAt: Date, now: Date): boolean {
-  return now.getTime() - createdAt.getTime() >= PENDING_TTL_MS
 }
 
 function isUniqueViolation(error: unknown): boolean {
