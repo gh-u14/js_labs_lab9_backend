@@ -15,7 +15,7 @@ export type ProfileResponse = {
   unverifiedExpiresAt: string | null
 }
 
-type ProfileFields = Pick<
+export type ProfileFields = Pick<
   User,
   | 'id'
   | 'login'
@@ -27,6 +27,18 @@ type ProfileFields = Pick<
   | 'phoneVerifiedAt'
   | 'unverifiedExpiresAt'
 >
+
+export const profileColumns = {
+  id: users.id,
+  login: users.login,
+  email: users.email,
+  phone: users.phone,
+  firstName: users.firstName,
+  lastName: users.lastName,
+  emailVerifiedAt: users.emailVerifiedAt,
+  phoneVerifiedAt: users.phoneVerifiedAt,
+  unverifiedExpiresAt: users.unverifiedExpiresAt,
+} as const
 
 export function toProfile(user: ProfileFields): ProfileResponse {
   return {

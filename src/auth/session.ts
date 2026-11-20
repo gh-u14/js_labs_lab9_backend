@@ -4,10 +4,20 @@ import type { FastifyReply, FastifyRequest } from 'fastify'
 import { db } from '../db/client.js'
 import { sessions, users } from '../db/schema.js'
 import { createAppError } from '../lib/errors.js'
-import { purgeExpiredUnverifiedContact, toProfile, type ProfileResponse } from './profile.js'
+import {
+  purgeExpiredUnverifiedContact,
+  toProfile,
+  type ProfileFields,
+  type ProfileResponse,
+} from './profile.js'
 import { REMEMBER_MAX_AGE_SEC, REMEMBER_TTL_MS, SESSION_TTL_MS } from './ttl.js'
 
 export const SID_COOKIE = 'sid'
+
+export type SessionUser = {
+  sessionId: string
+  user: ProfileFields
+}
 
 function newSessionId(): string {
   return randomBytes(32).toString('hex')
@@ -64,6 +74,10 @@ export async function deleteSession(sessionId: string): Promise<boolean> {
   return deleted.length > 0
 }
 
+export async function deleteAllSessions(userId: string): Promise<void> {
+  await db.delete(sessions).where(eq(sessions.userId, userId))
+}
+
 type SessionUserRow = {
   sessionId: string
   expiresAt: Date
@@ -103,8 +117,8 @@ async function loadSessionUser(sessionId: string): Promise<SessionUserRow | null
   return row ?? null
 }
 
-/** Resolve live session + profile, or throw 401. Deletes expired session rows. */
-export async function requireSessionProfile(request: FastifyRequest): Promise<ProfileResponse> {
+/** Live session + user after lazy contact purge. Throws 401 otherwise. */
+export async function requireSessionUser(request: FastifyRequest): Promise<SessionUser> {
   const sessionId = request.cookies[SID_COOKIE]
   if (!sessionId) {
     throw createAppError(401, 'unauthorized', 'Требуется вход')
@@ -136,7 +150,12 @@ export async function requireSessionProfile(request: FastifyRequest): Promise<Pr
     unverifiedExpiresAt: row.unverifiedExpiresAt,
   })
 
-  return toProfile(cleaned)
+  return { sessionId, user: cleaned }
+}
+
+export async function requireSessionProfile(request: FastifyRequest): Promise<ProfileResponse> {
+  const { user } = await requireSessionUser(request)
+  return toProfile(user)
 }
 
 export async function logoutCurrentSession(
