@@ -5,6 +5,8 @@ export const REMEMBER_TTL_MS = 30 * 24 * 60 * 60 * 1000
 export const REMEMBER_MAX_AGE_SEC = 30 * 24 * 60 * 60
 /** Pending email/phone replacement before OTP confirm (in-memory). */
 export const CONTACT_CHANGE_TTL_MS = 15 * 60 * 1000
+/** One-time password reset token in PostgreSQL. */
+export const RESET_TOKEN_TTL_MS = 15 * 60 * 1000
 
 export function isPendingExpired(createdAt: Date, now: Date = new Date()): boolean {
   return now.getTime() - createdAt.getTime() >= PENDING_TTL_MS

@@ -1,5 +1,10 @@
 import type { FastifyPluginAsync } from 'fastify'
 import { loginUser } from '../auth/login.js'
+import {
+  completeRecovery,
+  confirmRecovery,
+  startRecovery,
+} from '../auth/recovery.js'
 import { confirmRegistration, registerUser } from '../auth/register.js'
 import { logoutCurrentSession } from '../auth/session.js'
 
@@ -96,6 +101,76 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
     await logoutCurrentSession(request, reply)
     return reply.status(204).send()
   })
+
+  fastify.post(
+    '/api/auth/recovery',
+    {
+      schema: {
+        body: {
+          type: 'object',
+          required: ['identifier'],
+          additionalProperties: false,
+          properties: {
+            identifier: { type: 'string', minLength: 1 },
+          },
+        },
+      },
+    },
+    async (request, reply) => {
+      const body = request.body as { identifier: string }
+      const result = await startRecovery(body.identifier)
+      return reply.status(200).send(result)
+    },
+  )
+
+  fastify.post(
+    '/api/auth/recovery/confirm',
+    {
+      schema: {
+        body: {
+          type: 'object',
+          required: ['identifier', 'channel', 'code'],
+          additionalProperties: false,
+          properties: {
+            identifier: { type: 'string', minLength: 1 },
+            channel: { type: 'string', enum: ['email', 'phone'] },
+            code: { type: 'string', minLength: 1 },
+          },
+        },
+      },
+    },
+    async (request, reply) => {
+      const body = request.body as {
+        identifier: string
+        channel: 'email' | 'phone'
+        code: string
+      }
+      const result = await confirmRecovery(body)
+      return reply.status(200).send(result)
+    },
+  )
+
+  fastify.post(
+    '/api/auth/recovery/complete',
+    {
+      schema: {
+        body: {
+          type: 'object',
+          required: ['resetToken', 'passwordHash'],
+          additionalProperties: false,
+          properties: {
+            resetToken: { type: 'string', minLength: 1 },
+            passwordHash: passwordHashSchema,
+          },
+        },
+      },
+    },
+    async (request, reply) => {
+      const body = request.body as { resetToken: string; passwordHash: string }
+      const result = await completeRecovery(body)
+      return reply.status(200).send(result)
+    },
+  )
 }
 
 export default authRoutes

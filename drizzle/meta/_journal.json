@@ -15,6 +15,13 @@
       "when": 1795233074357,
       "tag": "0001_last_black_queen",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1795233855286,
+      "tag": "0002_common_hiroim",
+      "breakpoints": true
     }
   ]
 }
